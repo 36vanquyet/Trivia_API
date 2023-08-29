@@ -16,11 +16,19 @@ def create_app(test_config=None):
     """
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+    @app.route('/')
+    def hello_world():
+        return jsonify({'message':'HELLO, WORLD!'})
     """
     @TODO: Use the after_request decorator to set Access-Control-Allow
     """
-
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTIONS')
+        return response
     """
     @TODO:
     Create an endpoint to handle GET requests
@@ -97,6 +105,21 @@ def create_app(test_config=None):
     Create error handlers for all expected errors
     including 404 and 422.
     """
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+        'success': False,
+        'error': 404,
+        'message': 'Not found!'
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+        'success': False,
+        'error': 422,
+        'message': 'unprocessable!'
+        }), 422
 
     return app
 
