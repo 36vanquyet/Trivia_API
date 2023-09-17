@@ -19,14 +19,6 @@ def create_app(test_config=None):
     """
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    @app.route('/')
-    def index():
-        return jsonify(
-            {
-                'message':'This is Home Page!'
-            }
-        )
-    
     """
     @TODO: Use the after_request decorator to set Access-Control-Allow
     """
@@ -35,6 +27,15 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTIONS')
         return response
+
+    @app.route('/')
+    def index():
+        return jsonify(
+            {
+                'message':'This is Home Page!'
+            }
+        )
+
     """
     @TODO:
     Create an endpoint to handle GET requests
@@ -52,7 +53,7 @@ def create_app(test_config=None):
                     'categories': formatted_categories
                 }
             )
-        
+
         except Exception as e:
             abort(500)
 
@@ -90,7 +91,7 @@ def create_app(test_config=None):
                     'currentCategory': None  # In this case, I don't know where to get the current Category. So I'm leaving it as None
                 }
             )
-        
+
         except Exception as e:
             abort(500)
 
@@ -103,12 +104,11 @@ def create_app(test_config=None):
     """
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
+        question = Question.query.get(question_id)
+
+        if not question:
+            abort(404)
         try:
-            question = Question.query.get(question_id)
-
-            if not question:
-                abort(404)
-
             question.delete()
 
             return jsonify(
@@ -132,12 +132,12 @@ def create_app(test_config=None):
     """
     @app.route('/questions', methods=['POST'])
     def create_question():
+        data_json = request.get_json()
+
+        if 'question' not in data_json or 'answer' not in data_json or 'difficulty' not in data_json or 'category' not in data_json:
+            abort(400)
+
         try:
-            data_json = request.get_json()
-
-            if 'question' not in data_json or 'answer' not in data_json or 'difficulty' not in data_json or 'category' not in data_json:
-                abort(400)
-
             question = Question(
                 question=data_json['question'],
                 answer=data_json['answer'],
@@ -170,7 +170,6 @@ def create_app(test_config=None):
     def search_questions():
         try:
             search_term = request.get_json().get('searchTerm')
-
             questions = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
             formatted_questions = [question.format() for question in questions]
 
@@ -195,16 +194,18 @@ def create_app(test_config=None):
     """
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_by_category(category_id):
+        category = Category.query.filter_by(id=category_id).first()
+        if category is None:
+            abort(404)
         try:
             questions = Question.query.filter_by(category=category_id).all()
-
             formatted_questions = [question.format() for question in questions]
 
             return jsonify({
                 'success': True,
                 'questions': formatted_questions,
                 'totalQuestions': len(formatted_questions),
-                'currentCategory': Category.query.get(category_id).type
+                'currentCategory': category.type
             })
         except Exception as e:
             abort(500)
@@ -264,7 +265,7 @@ def create_app(test_config=None):
         return jsonify({
         'success': False,
         'error': 404,
-        'message': 'Not found!'
+        'message': 'Page Not found!'
         }), 404
 
     @app.errorhandler(422)
