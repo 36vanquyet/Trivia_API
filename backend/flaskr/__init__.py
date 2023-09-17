@@ -28,14 +28,6 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTIONS')
         return response
 
-    @app.route('/')
-    def index():
-        return jsonify(
-            {
-                'message':'This is Home Page!'
-            }
-        )
-
     """
     @TODO:
     Create an endpoint to handle GET requests
